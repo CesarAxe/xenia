@@ -387,8 +387,6 @@ dword_result_t XamEnumerate(dword_t handle, dword_t flags, lpvoid_t buffer,
     result = X_ERROR_SUCCESS;
   }
 
-  // Return X_ERROR_NO_MORE_FILES in HRESULT form.
-  X_HRESULT extended_result = result != 0 ? X_HRESULT_FROM_WIN32(result) : 0;
   if (items_returned) {
     assert_true(!overlapped);
     *items_returned = result == X_ERROR_SUCCESS ? item_count : 0;
@@ -396,7 +394,9 @@ dword_result_t XamEnumerate(dword_t handle, dword_t flags, lpvoid_t buffer,
   } else if (overlapped) {
     assert_true(!items_returned);
     kernel_state()->CompleteOverlappedImmediateEx(
-        overlapped, result, extended_result,
+        overlapped,
+        result == X_ERROR_SUCCESS ? X_ERROR_SUCCESS : X_ERROR_FUNCTION_FAILED,
+        X_HRESULT_FROM_WIN32(result),
         result == X_ERROR_SUCCESS ? item_count : 0);
     return X_ERROR_IO_PENDING;
   } else {
